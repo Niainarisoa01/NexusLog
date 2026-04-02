@@ -1,0 +1,155 @@
+name: NexusLog CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ═══════════════════════════════════════
+  # Rust Backend — Lint, Test, Audit
+  # ═══════════════════════════════════════
+  rust-check:
+    name: Rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      # Linux: install system dependencies for Tauri
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libgtk-3-dev
+
+      # Format check
+      - name: Check formatting
+        working-directory: src-tauri
+        run: cargo fmt --check
+
+      # Lint with clippy — zero warnings tolerated
+      - name: Clippy lint
+        working-directory: src-tauri
+        run: cargo clippy -- -D warnings
+
+      # Compile check
+      - name: Cargo check
+        working-directory: src-tauri
+        run: cargo check
+
+      # Run tests
+      - name: Run tests
+        working-directory: src-tauri
+        run: cargo test --all
+
+  # ═══════════════════════════════════════
+  # Rust Security Audit
+  # ═══════════════════════════════════════
+  rust-audit:
+    name: Security Audit (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run audit
+        working-directory: src-tauri
+        run: cargo audit
+
+  # ═══════════════════════════════════════
+  # Frontend — TypeScript, Lint, Build
+  # ═══════════════════════════════════════
+  frontend-check:
+    name: Frontend (TypeScript + ESLint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # TypeScript strict compilation check — zero errors
+      - name: TypeScript check (strict mode)
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      # ESLint — zero warnings
+      - name: ESLint
+        working-directory: frontend
+        run: npx eslint .
+
+      # Build static export (validates Next.js output: 'export')
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  # ═══════════════════════════════════════
+  # Frontend Security Audit
+  # ═══════════════════════════════════════
+  frontend-audit:
+    name: Security Audit (npm)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: npm audit
+        working-directory: frontend
+        run: npm audit --audit-level=critical
