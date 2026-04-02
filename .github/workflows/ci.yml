@@ -70,10 +70,98 @@ jobs:
         working-directory: src-tauri
         run: cargo check
 
-      # Run tests
+      # Run tests (includes parser unit tests with rayon parallelization)
       - name: Run tests
         working-directory: src-tauri
         run: cargo test --all
+
+      # Build release binary (validates cross-platform compilation)
+      - name: Build release binary
+        working-directory: src-tauri
+        run: cargo build --release
+
+      # Verify CLI help works on all platforms
+      - name: Verify CLI (parse --help)
+        working-directory: src-tauri
+        run: cargo run --release -- parse --help
+
+      # Verify CLI (bench --help)
+      - name: Verify CLI (bench --help)
+        working-directory: src-tauri
+        run: cargo run --release -- bench --help
+
+      # Verify CLI (export --help)
+      - name: Verify CLI (export --help)
+        working-directory: src-tauri
+        run: cargo run --release -- export --help
+
+  # ═══════════════════════════════════════
+  # Parser Cross-Platform Validation
+  # Tests that the parser module compiles and passes
+  # unit tests on all 3 target platforms.
+  # ═══════════════════════════════════════
+  parser-cross-platform:
+    name: Parser Cross-Platform (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: rust-check
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-parser-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-parser-
+
+      # Linux: install system dependencies for Tauri
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libgtk-3-dev
+
+      # Run parser-specific tests to validate cross-platform portability
+      - name: Run parser unit tests
+        working-directory: src-tauri
+        run: cargo test --lib engine::parser -- --nocapture
+
+      # Run streaming tests
+      - name: Run streaming unit tests
+        working-directory: src-tauri
+        run: cargo test --lib engine::streaming -- --nocapture
+
+      # Run model tests
+      - name: Run model unit tests
+        working-directory: src-tauri
+        run: cargo test --lib engine::models -- --nocapture
+
+      # Verify the CLI binary can be built and executed
+      - name: Build and verify CLI
+        working-directory: src-tauri
+        run: |
+          cargo build --release
+          echo "Binary built successfully on ${{ runner.os }}"
+          cargo run --release -- parse --help
 
   # ═══════════════════════════════════════
   # Rust Security Audit

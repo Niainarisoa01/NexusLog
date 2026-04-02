@@ -3,12 +3,18 @@
 // Wraps the `evtx` crate to provide high-level parsing with rayon parallelism.
 // This module is cross-platform: it works on Windows, Linux, and macOS.
 //
+// Two parsing modes:
+//   1. Sequential (load_evtx)      — simple, direct iteration
+//   2. Parallel  (load_evtx_parallel) — rayon batch mapping for max throughput
+//
 // Phase 0: Basic file loading + JSON conversion
-// Phase 2: Streaming mode via flume channels (see streaming.rs)
+// Phase 0 Section 3: Rayon parallelization + performance benchmarking
 
 use std::path::Path;
+use std::time::Instant;
 
 use evtx::EvtxParser;
+use rayon::prelude::*;
 use serde_json::Value;
 
 use super::models::{EventLevel, EventRecord};
@@ -26,10 +32,104 @@ pub enum ParseError {
     InvalidFormat(String),
 }
 
-/// Parse an entire .evtx file and return all events as a Vec.
+/// Performance statistics returned after parsing
+#[derive(Debug, Clone)]
+pub struct ParseStats {
+    /// Number of events successfully parsed
+    pub event_count: u64,
+    /// Number of records that failed to parse (skipped)
+    pub skipped_count: u64,
+    /// Total parsing duration in milliseconds
+    pub duration_ms: u64,
+    /// Throughput in events per second
+    pub events_per_sec: f64,
+    /// File size in bytes
+    pub file_size_bytes: u64,
+    /// Throughput in MB/s
+    pub mb_per_sec: f64,
+}
+
+/// Parse an entire .evtx file using rayon parallelization.
+///
+/// This is the **recommended** high-performance parsing mode.
+/// The strategy:
+///   1. Read all raw JSON values from the evtx crate (single-threaded I/O)
+///   2. Batch-convert them to EventRecord using rayon parallel iterator
+///
+/// This approach maximizes CPU utilization on the map_to_model step,
+/// which involves JSON field extraction, timestamp parsing, and string allocation.
+///
+/// # Arguments
+/// * `path` — Path to the .evtx file
+///
+/// # Returns
+/// * `Ok((Vec<EventRecord>, ParseStats))` on success
+/// * `Err(ParseError)` if the file cannot be opened or parsed
+pub fn load_evtx_parallel(path: &Path) -> Result<(Vec<EventRecord>, ParseStats), ParseError> {
+    if !path.exists() {
+        return Err(ParseError::FileNotFound(path.display().to_string()));
+    }
+
+    let file_size_bytes = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+    let start = Instant::now();
+
+    let mut parser = EvtxParser::from_path(path)
+        .map_err(|e| ParseError::FileOpen(e.to_string()))?;
+
+    // Phase 1: Collect all raw JSON values (single-threaded evtx I/O)
+    let mut raw_records: Vec<(Value, u64)> = Vec::new();
+    let mut skipped_count: u64 = 0;
+
+    for result in parser.records_json_value() {
+        match result {
+            Ok(record) => {
+                raw_records.push((record.data, record.event_record_id));
+            }
+            Err(e) => {
+                tracing::warn!("Skipping malformed EVTX record: {}", e);
+                skipped_count += 1;
+            }
+        }
+    }
+
+    // Phase 2: Parallel conversion using rayon
+    let events: Vec<EventRecord> = raw_records
+        .into_par_iter()
+        .filter_map(|(data, record_id)| map_to_model(data, record_id))
+        .collect();
+
+    let duration = start.elapsed();
+    let duration_ms = duration.as_millis() as u64;
+    let event_count = events.len() as u64;
+    let duration_secs = duration.as_secs_f64().max(0.001); // Avoid division by zero
+
+    let stats = ParseStats {
+        event_count,
+        skipped_count,
+        duration_ms,
+        events_per_sec: event_count as f64 / duration_secs,
+        file_size_bytes,
+        mb_per_sec: (file_size_bytes as f64 / (1024.0 * 1024.0)) / duration_secs,
+    };
+
+    tracing::info!(
+        "Parallel-parsed {} events ({} skipped) from {} in {:.2?} ({:.0} events/s, {:.1} MB/s)",
+        event_count,
+        skipped_count,
+        path.display(),
+        duration,
+        stats.events_per_sec,
+        stats.mb_per_sec,
+    );
+
+    Ok((events, stats))
+}
+
+/// Parse an entire .evtx file sequentially (single-threaded).
 ///
 /// This is the simple/direct loading mode — loads everything into memory.
-/// For large files (> 1 Go), use `streaming::load_evtx_streamed` instead.
+/// For maximum performance, use `load_evtx_parallel` instead.
+/// For large files (> 1 Go), use `streaming::load_evtx_streamed`.
 ///
 /// # Arguments
 /// * `path` - Path to the .evtx file
@@ -272,5 +372,57 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ParseError::FileNotFound(_)));
+    }
+
+    #[test]
+    fn test_file_not_found_parallel() {
+        let result = load_evtx_parallel(Path::new("/nonexistent/file.evtx"));
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ParseError::FileNotFound(_)));
+    }
+
+    #[test]
+    fn test_map_to_model_parallel_batch() {
+        // Simulate a batch of raw records for parallel processing
+        let raw_records: Vec<(Value, u64)> = (0..100)
+            .map(|i| {
+                let json = serde_json::json!({
+                    "Event": {
+                        "System": {
+                            "EventID": 4625,
+                            "Level": 3,
+                            "TimeCreated": {
+                                "#attributes": {
+                                    "SystemTime": "2026-01-15T10:30:00.000Z"
+                                }
+                            },
+                            "Provider": {
+                                "#attributes": {
+                                    "Name": "TestProvider"
+                                }
+                            },
+                            "Channel": "Security",
+                            "Computer": "WORKSTATION"
+                        },
+                        "EventData": {}
+                    }
+                });
+                (json, i as u64)
+            })
+            .collect();
+
+        let events: Vec<EventRecord> = raw_records
+            .into_par_iter()
+            .filter_map(|(data, record_id)| map_to_model(data, record_id))
+            .collect();
+
+        assert_eq!(events.len(), 100);
+        // Verify all events were mapped correctly
+        for event in &events {
+            assert_eq!(event.event_id, 4625);
+            assert_eq!(event.level, EventLevel::Warning);
+            assert_eq!(event.provider, "TestProvider");
+        }
     }
 }

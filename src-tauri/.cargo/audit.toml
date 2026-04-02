@@ -1,0 +1,65 @@
+# NexusLog — cargo audit configuration
+#
+# This file explicitly ignores known advisories on transitive dependencies
+# that we cannot fix ourselves. All advisories listed here are:
+#   - "unmaintained" or "unsound" warnings (NOT actual vulnerabilities)
+#   - Transitive dependencies from Tauri, wry, gtk-rs, or evtx
+#   - Outside NexusLog's direct control
+#
+# These are reviewed periodically and will be removed when upstream fixes land.
+# Last reviewed: 2026-04-02
+
+[advisories]
+ignore = [
+    # ═══════════════════════════════════════════════════════════════
+    # GTK3 bindings — unmaintained (gtk-rs migrated to GTK4)
+    # Source: tauri → wry → gtk (Linux-only, not used on Windows)
+    # Tracking: https://github.com/tauri-apps/tauri/issues — Tauri v3 will use GTK4
+    # ═══════════════════════════════════════════════════════════════
+    "RUSTSEC-2024-0411", # gdkwayland-sys — unmaintained
+    "RUSTSEC-2024-0412", # gdk — unmaintained
+    "RUSTSEC-2024-0413", # atk — unmaintained
+    "RUSTSEC-2024-0414", # gdkx11-sys — unmaintained
+    "RUSTSEC-2024-0415", # gtk — unmaintained
+    "RUSTSEC-2024-0416", # atk-sys — unmaintained
+    "RUSTSEC-2024-0417", # gdkx11 — unmaintained
+    "RUSTSEC-2024-0418", # gdk-sys — unmaintained
+    "RUSTSEC-2024-0419", # gtk3-macros — unmaintained
+    "RUSTSEC-2024-0420", # gtk-sys — unmaintained
+
+    # ═══════════════════════════════════════════════════════════════
+    # glib unsoundness in VariantStrIter
+    # Source: tauri → wry → gtk → glib
+    # Impact: NexusLog does NOT use glib::VariantStrIter directly
+    # ═══════════════════════════════════════════════════════════════
+    "RUSTSEC-2024-0429", # glib — unsound Iterator impl
+
+    # ═══════════════════════════════════════════════════════════════
+    # proc-macro-error — unmaintained
+    # Source: tauri → gtk → gtk3-macros → proc-macro-error
+    # ═══════════════════════════════════════════════════════════════
+    "RUSTSEC-2024-0370", # proc-macro-error — unmaintained
+
+    # ═══════════════════════════════════════════════════════════════
+    # encoding — unmaintained
+    # Source: evtx → encoding (required by the evtx crate for EVTX parsing)
+    # No alternative available until evtx crate updates
+    # ═══════════════════════════════════════════════════════════════
+    "RUSTSEC-2021-0153", # encoding — unmaintained
+
+    # ═══════════════════════════════════════════════════════════════
+    # fxhash — unmaintained
+    # Source: tauri-utils → kuchikiki → selectors → fxhash
+    # ═══════════════════════════════════════════════════════════════
+    "RUSTSEC-2025-0057", # fxhash — unmaintained
+
+    # ═══════════════════════════════════════════════════════════════
+    # unic-* crates — unmaintained
+    # Source: tauri-utils → urlpattern → unic-ucd-ident → unic-*
+    # ═══════════════════════════════════════════════════════════════
+    "RUSTSEC-2025-0075", # unic-char-range — unmaintained
+    "RUSTSEC-2025-0080", # unic-common — unmaintained
+    "RUSTSEC-2025-0081", # unic-char-property — unmaintained
+    "RUSTSEC-2025-0098", # unic-ucd-version — unmaintained
+    "RUSTSEC-2025-0100", # unic-ucd-ident — unmaintained
+]

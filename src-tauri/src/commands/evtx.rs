@@ -53,21 +53,29 @@ pub async fn load_file_command(
         
         total_events += chunk_size;
         
-        // Recalculate percent if possible
+        // Recalculate percent based on estimated total events from file size
+        // Average EVTX record is ~1000 bytes (header + XML + padding)
         if chunk.total_count == 0 && file_size_bytes > 0 {
-            // Rough estimation
-            let progress = (total_events as f32 / (file_size_bytes as f32 / 500.0)) * 100.0;
+            let estimated_total = (file_size_bytes as f64 / 1000.0).max(1.0);
+            let progress = (total_events as f32 / estimated_total as f32) * 100.0;
             chunk.progress_percent = progress.min(99.0);
-        } else {
-            chunk.progress_percent = 100.0;
+        } else if chunk.total_count > 0 {
+            chunk.progress_percent = (total_events as f32 / chunk.total_count as f32) * 100.0;
         }
 
         if chunk.is_last {
             chunk.progress_percent = 100.0;
         }
 
+        // Drop the massive EventRecord vector to prevent frontend UI freeze
+        // We only send the metadata as progress updates to the frontend
+        let progress_chunk = EventChunk {
+            events: vec![],
+            ..chunk
+        };
+
         // Send to frontend
-        let _ = app.emit("evtx-chunk", chunk);
+        let _ = app.emit("evtx-chunk", progress_chunk);
     }
     
     let duration_ms = start_time.elapsed().as_millis() as u64;

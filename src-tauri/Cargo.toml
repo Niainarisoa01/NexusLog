@@ -47,4 +47,3 @@ clap = { version = "4.5", features = ["derive"] }
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = ["Win32_System_EventLog", "Win32_Foundation", "Win32_System_Console"] }
-clap = { version = "4.5", features = ["derive"] }
