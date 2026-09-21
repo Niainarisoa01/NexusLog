@@ -1,0 +1,143 @@
+{
+  "app": {
+    "name": "NexusLog",
+    "description": "Ultra-fast Windows Event Log Viewer",
+    "version": "v0.1.0"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "settings": "Settings",
+    "about": "About",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "retry": "Retry",
+    "noData": "No data to display",
+    "reset": "Reset",
+    "copyToClipboard": "Copy to clipboard",
+    "copied": "Copied!"
+  },
+  "welcome": {
+    "title": "Welcome to NexusLog",
+    "subtitle": "Ultra-fast Windows Event Log Viewer powered by Rust",
+    "getStarted": "Get Started",
+    "openFile": "Open .evtx File",
+    "dragDrop": "or drag & drop a file here",
+    "liveMode": "Live Mode",
+    "liveModeDesc": "Monitor Windows Event Logs in real-time",
+    "fileMode": "File Analysis",
+    "fileModeDesc": "Parse and analyze .evtx files at blazing speed",
+    "features": {
+      "fast": "Blazing Fast",
+      "fastDesc": "Parse 500MB files in under 5 seconds with Rust",
+      "search": "Full-Text Search",
+      "searchDesc": "Find any event instantly with tantivy indexing",
+      "sigma": "Sigma Rules",
+      "sigmaDesc": "Detect threats with community Sigma rules",
+      "crossPlatform": "Cross-Platform",
+      "crossPlatformDesc": "Analyze .evtx files on Windows, Linux & macOS"
+    }
+  },
+  "header": {
+    "openFile": "Open File",
+    "liveWatch": "Live Watch",
+    "dashboard": "Dashboard",
+    "sigma": "Sigma",
+    "alerts": "Alerts",
+    "language": "Language",
+    "theme": "Theme",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode"
+  },
+  "sidebar": {
+    "workspace": "WORKSPACE",
+    "files": "Open Files",
+    "channels": "Channels",
+    "noFiles": "No files open",
+    "closeFile": "Close file"
+  },
+  "eventTable": {
+    "columns": {
+      "timestamp": "Date/Time",
+      "level": "Level",
+      "eventId": "Event ID",
+      "provider": "Source",
+      "description": "Description",
+      "computer": "Computer",
+      "sigma": "Sigma",
+      "sourceFile": "Source File"
+    },
+    "noEvents": "No events to display",
+    "loadingEvents": "Loading events...",
+    "totalEvents": "{{count}} events",
+    "filteredEvents": "{{filtered}} of {{total}} events"
+  },
+  "detail": {
+    "title": "Event Details",
+    "tabs": {
+      "general": "General",
+      "data": "Data",
+      "xml": "XML",
+      "context": "Context",
+      "sigma": "Sigma"
+    },
+    "fields": {
+      "recordId": "Record ID",
+      "eventId": "Event ID",
+      "level": "Level",
+      "timestamp": "Timestamp",
+      "provider": "Provider",
+      "channel": "Channel",
+      "computer": "Computer",
+      "taskId": "Task ID",
+      "keywords": "Keywords",
+      "userId": "User ID"
+    },
+    "noSelection": "Select an event to view details"
+  },
+  "filters": {
+    "title": "Filters",
+    "searchPlaceholder": "Search logs...",
+    "level": "Level",
+    "dateRange": "Date Range",
+    "eventId": "Event ID",
+    "provider": "Provider",
+    "channel": "Channel",
+    "clear": "Clear Filters",
+    "apply": "Apply",
+    "from": "From",
+    "to": "To"
+  },
+  "levels": {
+    "critical": "Critical",
+    "error": "Error",
+    "warning": "Warning",
+    "information": "Information",
+    "verbose": "Verbose"
+  },
+  "status": {
+    "ready": "Ready",
+    "parsing": "Parsing...",
+    "indexing": "Indexing...",
+    "streaming": "Streaming...",
+    "watching": "Watching...",
+    "error": "Error",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
+  },
+  "errors": {
+    "fileNotFound": "File not found: {{path}}",
+    "parseFailed": "Failed to parse file: {{error}}",
+    "ipcError": "Communication error with backend",
+    "liveNotAvailable": "Live monitoring is only available on Windows"
+  }
+}

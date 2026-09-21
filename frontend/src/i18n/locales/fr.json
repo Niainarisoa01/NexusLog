@@ -1,0 +1,143 @@
+{
+  "app": {
+    "name": "NexusLog",
+    "description": "Visionneuse ultra-rapide des journaux d'événements Windows",
+    "version": "v0.1.0"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "settings": "Paramètres",
+    "about": "À propos",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "retry": "Réessayer",
+    "noData": "Aucune donnée à afficher",
+    "reset": "Réinitialiser",
+    "copyToClipboard": "Copier dans le presse-papiers",
+    "copied": "Copié !"
+  },
+  "welcome": {
+    "title": "Bienvenue sur NexusLog",
+    "subtitle": "Visionneuse ultra-rapide des journaux d'événements Windows propulsée par Rust",
+    "getStarted": "Commencer",
+    "openFile": "Ouvrir un fichier .evtx",
+    "dragDrop": "ou glissez-déposez un fichier ici",
+    "liveMode": "Mode Live",
+    "liveModeDesc": "Surveillez les journaux Windows en temps réel",
+    "fileMode": "Analyse de fichier",
+    "fileModeDesc": "Analysez des fichiers .evtx à une vitesse fulgurante",
+    "features": {
+      "fast": "Ultra-rapide",
+      "fastDesc": "Parsez des fichiers de 500 Mo en moins de 5 secondes avec Rust",
+      "search": "Recherche Full-Text",
+      "searchDesc": "Trouvez n'importe quel événement instantanément grâce à l'indexation tantivy",
+      "sigma": "Règles Sigma",
+      "sigmaDesc": "Détectez les menaces avec les règles Sigma communautaires",
+      "crossPlatform": "Multi-plateforme",
+      "crossPlatformDesc": "Analysez des fichiers .evtx sur Windows, Linux et macOS"
+    }
+  },
+  "header": {
+    "openFile": "Ouvrir un fichier",
+    "liveWatch": "Surveillance Live",
+    "dashboard": "Tableau de bord",
+    "sigma": "Sigma",
+    "alerts": "Alertes",
+    "language": "Langue",
+    "theme": "Thème",
+    "darkMode": "Mode sombre",
+    "lightMode": "Mode clair"
+  },
+  "sidebar": {
+    "workspace": "ESPACE DE TRAVAIL",
+    "files": "Fichiers ouverts",
+    "channels": "Canaux",
+    "noFiles": "Aucun fichier ouvert",
+    "closeFile": "Fermer le fichier"
+  },
+  "eventTable": {
+    "columns": {
+      "timestamp": "Date/Heure",
+      "level": "Niveau",
+      "eventId": "ID événement",
+      "provider": "Source",
+      "description": "Description",
+      "computer": "Ordinateur",
+      "sigma": "Sigma",
+      "sourceFile": "Fichier source"
+    },
+    "noEvents": "Aucun événement à afficher",
+    "loadingEvents": "Chargement des événements...",
+    "totalEvents": "{{count}} événements",
+    "filteredEvents": "{{filtered}} sur {{total}} événements"
+  },
+  "detail": {
+    "title": "Détails de l'événement",
+    "tabs": {
+      "general": "Général",
+      "data": "Données",
+      "xml": "XML",
+      "context": "Contexte",
+      "sigma": "Sigma"
+    },
+    "fields": {
+      "recordId": "ID enregistrement",
+      "eventId": "ID événement",
+      "level": "Niveau",
+      "timestamp": "Horodatage",
+      "provider": "Fournisseur",
+      "channel": "Canal",
+      "computer": "Ordinateur",
+      "taskId": "ID tâche",
+      "keywords": "Mots-clés",
+      "userId": "ID utilisateur"
+    },
+    "noSelection": "Sélectionnez un événement pour voir les détails"
+  },
+  "filters": {
+    "title": "Filtres",
+    "searchPlaceholder": "Rechercher dans les logs...",
+    "level": "Niveau",
+    "dateRange": "Plage de dates",
+    "eventId": "ID événement",
+    "provider": "Fournisseur",
+    "channel": "Canal",
+    "clear": "Effacer les filtres",
+    "apply": "Appliquer",
+    "from": "De",
+    "to": "À"
+  },
+  "levels": {
+    "critical": "Critique",
+    "error": "Erreur",
+    "warning": "Avertissement",
+    "information": "Information",
+    "verbose": "Détaillé"
+  },
+  "status": {
+    "ready": "Prêt",
+    "parsing": "Analyse en cours...",
+    "indexing": "Indexation...",
+    "streaming": "Streaming...",
+    "watching": "Surveillance...",
+    "error": "Erreur",
+    "connected": "Connecté",
+    "disconnected": "Déconnecté"
+  },
+  "errors": {
+    "fileNotFound": "Fichier introuvable : {{path}}",
+    "parseFailed": "Échec de l'analyse du fichier : {{error}}",
+    "ipcError": "Erreur de communication avec le backend",
+    "liveNotAvailable": "La surveillance en temps réel n'est disponible que sur Windows"
+  }
+}

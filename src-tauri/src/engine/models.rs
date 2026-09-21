@@ -175,6 +175,13 @@ pub enum SortOrder {
     Descending,
 }
 
+/// Paginated events response with total filtered count
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PaginatedResponse {
+    pub events: Vec<EventRecord>,
+    pub total_filtered: usize,
+}
+
 /// Summary returned after loading a file
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LoadSummary {

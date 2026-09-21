@@ -1,0 +1,71 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+
+    /* ═══════════════════════════════════════════════════════
+       STRICT TYPE SAFETY — Maximum Security Configuration
+       ═══════════════════════════════════════════════════════ */
+
+    // Core strict mode (enables suite of checks)
+    "strict": true,
+
+    // Treat array/object index access as potentially undefined
+    // Prevents: "Cannot read property of undefined" runtime crashes
+    "noUncheckedIndexedAccess": true,
+
+    // Enforce exact optional property types
+    // Prevents: accidentally assigning undefined to optional properties
+    "exactOptionalPropertyTypes": true,
+
+    // Flag unused variables and parameters as errors
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    // Prevent fall-through in switch statements
+    "noFallthroughCasesInSwitch": true,
+
+    // Force consistent import/export syntax
+    "verbatimModuleSyntax": false,
+
+    // Ensure all code paths return a value in functions
+    "noImplicitReturns": true,
+
+    // Disallow accessing properties using string index (obj["key"])
+    // Forces explicit interface definitions
+    "noPropertyAccessFromIndexSignature": true,
+
+    // Force override keyword for class method overrides
+    "noImplicitOverride": true,
+
+    /* ═══════════════════════════════════════════════════════ */
+
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}

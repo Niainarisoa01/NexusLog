@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 use tauri::{AppHandle, Emitter, State};
 
-use crate::engine::models::{EventChunk, PaginationRequest, EventRecord, SortField, SortOrder, FilterQuery, LoadSummary};
+use crate::engine::models::{EventChunk, PaginationRequest, EventRecord, SortField, SortOrder, FilterQuery, LoadSummary, PaginatedResponse};
 use crate::engine::state::AppState;
 use crate::engine::streaming::load_evtx_streamed;
 /// Command to load an EVTX file. It will stream chunks to the frontend while
@@ -115,11 +115,31 @@ fn matches_filter(event: &EventRecord, query: &FilterQuery) -> bool {
             return false;
         }
     }
+    if let Some(time_from) = &query.time_from {
+        if event.timestamp < *time_from {
+            return false;
+        }
+    }
+    if let Some(time_to) = &query.time_to {
+        if event.timestamp > *time_to {
+            return false;
+        }
+    }
     if let Some(search) = &query.search_text {
-        if !search.is_empty() {
-             let text = search.to_lowercase();
+        let trimmed = search.trim();
+        if !trimmed.is_empty() {
+             let text = trimmed.to_lowercase();
              let msg = event.data.to_string().to_lowercase();
-             if !msg.contains(&text) && !event.provider.to_lowercase().contains(&text) {
+             let provider = event.provider.to_lowercase();
+             let channel = event.channel.to_lowercase();
+             let computer = event.computer.to_lowercase();
+             let event_id_str = event.event_id.to_string();
+
+             if !msg.contains(&text)
+                 && !provider.contains(&text)
+                 && !channel.contains(&text)
+                 && !computer.contains(&text)
+                 && !event_id_str.contains(&text) {
                  return false;
              }
         }
@@ -128,12 +148,12 @@ fn matches_filter(event: &EventRecord, query: &FilterQuery) -> bool {
     true
 }
 
-/// Get a paginated window of events
+/// Get a paginated window of events along with the total count matching active filters
 #[tauri::command]
 pub fn get_paginated_events(
     request: PaginationRequest,
     state: State<'_, AppState>,
-) -> Result<Vec<EventRecord>, String> {
+) -> Result<PaginatedResponse, String> {
     let events = state.loaded_events.lock().unwrap();
     
     let mut filtered: Vec<&EventRecord> = if let Some(filters) = &request.filters {
@@ -142,6 +162,8 @@ pub fn get_paginated_events(
         events.iter().collect()
     };
     
+    let total_filtered = filtered.len();
+
     // Sort
     if let Some(sort_by) = &request.sort_by {
         filtered.sort_by(|a, b| {
@@ -163,13 +185,16 @@ pub fn get_paginated_events(
     
     // Paginate
     let start = request.offset as usize;
-    let end = (start + request.limit as usize).min(filtered.len());
+    let end = (start + request.limit as usize).min(total_filtered);
     
-    if start >= filtered.len() {
-        return Ok(vec![]);
-    }
+    let page: Vec<EventRecord> = if start >= total_filtered {
+        vec![]
+    } else {
+        filtered[start..end].iter().map(|&e| e.clone()).collect()
+    };
     
-    let page: Vec<EventRecord> = filtered[start..end].iter().map(|&e| e.clone()).collect();
-    
-    Ok(page)
+    Ok(PaginatedResponse {
+        events: page,
+        total_filtered,
+    })
 }
